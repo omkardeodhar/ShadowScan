@@ -1,4 +1,5 @@
 import socket
+import requests
 from colorama import Fore, Back, Style
 
 def get_ip (domain):
@@ -12,19 +13,41 @@ def get_ip (domain):
 def port_scan (ip , ports):
     for port in ports:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if port == 443 or port == 80:
-            sock.settimeout(2.0)
-        else:
-            sock.settimeout(0.5)
+        sock.settimeout(1.0)
         try:
-            sock.connect ((target_ip , port))
-            print(f"Port {port} is OPEN.")
-            service_enum = sock.recv(1024).decode('utf-8').strip()
-            print(f"Service information for Port {port}: {service_enum}")
+            sock.connect ((ip , port))
+            print(f"\nPort {port} is OPEN: ")
+            if port == 80 or port == 443 or port == 8080:
+                header_info (target_ip , port)
+            else:
+                service_enum = sock.recv(1024).decode('utf-8').strip()
+                print(f"Service information for Port {port}: {service_enum}")
         except (socket.timeout , socket.error):
-            continue
+            pass
         finally:
             sock.close()
+
+def header_info (ip , ports):
+        try:
+            url1 = f"http://{ip}:{ports}"
+            url2 = f"https://{ip}:{ports}"
+            if ports == 80 or ports == 8080:
+                response = requests.get(url1)
+            elif ports == 443:
+                response = requests.get(url2)
+            else:
+                pass
+            if response.status_code == 200:
+                print(f"Server information: {response.headers['Server']}")
+                print(f"Date: {response.headers.get('Date')}")
+                print(f"Content-Type: {response.headers.get('Content-Type')}")
+                print(f"Content-Length: {response.headers.get('Content-Length')}")
+                print(f"Cache-Control: {response.headers.get('Cache-Control')}")
+                print(f"Expires: {response.headers.get('Expires')}")
+            else:
+                print(f"HTTP status code: {response.status_code}")
+        except requests.RequestException as e:
+            print(f"Error getting information: {e}")
 
 background = Back.BLACK
 text_style = Style.BRIGHT
@@ -38,7 +61,7 @@ banner = f"""
 *   PROPER PERMISSION; MAY VIOLATE PRIVACY LAWS.      *
 *                                                     *
 *   Developed by: Omkar Deodhar                       *
-*   Version: 1.0                                      *
+*   Version: 1.5                                      *
 *******************************************************
 {Style.RESET_ALL}
 """
@@ -48,8 +71,8 @@ target_domain = input("Enter the IPv4 address or Domain name of the target (with
 target_ip = get_ip (target_domain)
 if target_ip:
     common_ports = [21,22,23,25,53,80,137,138,139,389,443,445,1433,3306,3389,8080]
-    print(f"Scanning most common ports: ")
+    print(f"Starting port scan for {target_ip}: ")
     port_scan(target_ip , common_ports)
 else:
-    print("There was some error resolving the ip.")
+    print("There was some error resolving the IP.")
     exit()
