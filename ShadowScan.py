@@ -13,7 +13,7 @@ def get_ip (domain):
 def port_scan (ip , ports):
     for port in ports:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1.0)
+        sock.settimeout(timeout)
         try:
             sock.connect ((ip , port))
             print(f"\nPort {port} is OPEN: ")
@@ -48,31 +48,41 @@ def header_info (ip , ports):
                 print(f"HTTP status code: {response.status_code}")
         except requests.RequestException as e:
             print(f"Error getting information: {e}")
+            
+def main ():
+    global timeout,target_ip
+    background = Back.BLACK
+    text_style = Style.BRIGHT
+    banner = f"""
+    {Fore.RED}{background}{text_style}
+    *******************************************************
+    *             SHADOWSCAN PORT SCANNER                 *
+    *                                                     *
+    *   WARNING: THIS TOOL IS FOR EDUCATIONAL AND         *
+    *   AUTHORIZED USE ONLY. USE WITH CAUTION AND         *
+    *   PROPER PERMISSION; MAY VIOLATE PRIVACY LAWS.      *
+    *                                                     *
+    *   Developed by: Omkar Deodhar                       *
+    *   Version: 1.5                                      *
+    *******************************************************
+    {Style.RESET_ALL}
+    """
+    print(banner)
 
-background = Back.BLACK
-text_style = Style.BRIGHT
-banner = f"""
-{Fore.RED}{background}{text_style}
-*******************************************************
-*             SHADOWSCAN PORT SCANNER                 *
-*                                                     *
-*   WARNING: THIS TOOL IS FOR EDUCATIONAL AND         *
-*   AUTHORIZED USE ONLY. USE WITH CAUTION AND         *
-*   PROPER PERMISSION; MAY VIOLATE PRIVACY LAWS.      *
-*                                                     *
-*   Developed by: Omkar Deodhar                       *
-*   Version: 1.5                                      *
-*******************************************************
-{Style.RESET_ALL}
-"""
-print(banner)
-
-target_domain = input("Enter the IPv4 address or Domain name of the target (without http/https/www) : ")
-target_ip = get_ip (target_domain)
-if target_ip:
-    common_ports = [21,22,23,25,53,80,137,138,139,389,443,445,1433,3306,3389,8080]
-    print(f"Starting port scan for {target_ip}: ")
-    port_scan(target_ip , common_ports)
-else:
-    print("There was some error resolving the IP.")
-    exit()
+    target_domain = input("Enter the IPv4 address or Domain name of the target (without http/https/www): ")
+    target_ip = get_ip (target_domain)
+    try:
+        timeout = float(input("Enter Socket timeout in seconds (Higher socket timeout will result in a slower scan): "))
+    except ValueError:
+        print("Enter valid timeout value")
+        exit()
+    if target_ip:
+        common_ports = [21,22,23,25,53,80,110,135,137,138,139,389,443,445,636,995,1433,1434,3306,3389,8080]
+        print(f"\nStarting port scan for {target_ip}: ")
+        port_scan(target_ip , common_ports)
+    else:
+        print("There was some error resolving the IP.")
+        exit()
+        
+if __name__ == "__main__":
+    main()
