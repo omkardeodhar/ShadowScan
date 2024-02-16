@@ -16,41 +16,30 @@ def port_scan (ip , ports):
         sock.settimeout(timeout)
         try:
             sock.connect ((ip , port))
-            print(f"\nPort {port} is OPEN: ")
+            print(f"\n{Fore.GREEN}# Port {port} is OPEN: {Style.RESET_ALL}")
             if port == 80 or port == 443 or port == 8080:
-                header_info (target_ip , port)
+                header_info (ip , sock)
             else:
                 service_enum = sock.recv(1024).decode('utf-8').strip()
-                print(f"Service information for Port {port}: {service_enum}")
+                print(f"Service information for Port {port}: \n{service_enum}")
         except (socket.timeout , socket.error):
             pass
         finally:
             sock.close()
 
-def header_info (ip , ports):
+def header_info (ip , sock):
         try:
-            url1 = f"http://{ip}:{ports}"
-            url2 = f"https://{ip}:{ports}"
-            if ports == 80 or ports == 8080:
-                response = requests.get(url1)
-            elif ports == 443:
-                response = requests.get(url2)
-            else:
-                pass
-            if response.status_code == 200:
-                print(f"Server information: {response.headers['Server']}")
-                print(f"Date: {response.headers.get('Date')}")
-                print(f"Content-Type: {response.headers.get('Content-Type')}")
-                print(f"Content-Length: {response.headers.get('Content-Length')}")
-                print(f"Cache-Control: {response.headers.get('Cache-Control')}")
-                print(f"Expires: {response.headers.get('Expires')}")
-            else:
-                print(f"HTTP status code: {response.status_code}")
-        except requests.RequestException as e:
-            print(f"Error getting information: {e}")
+            url = f"GET / HTTP/1.1\r\nHost: {ip}\r\n\r\n"
+            sock.send(url.encode('utf-8'))
+            response_header = sock.recv(1024).decode('utf-8')
+            print("Recieved Response: ")
+            for line in response_header.split('\n'):
+                print(line)
+        except (socket.timeout , socket.error):
+            pass
             
 def main ():
-    global timeout,target_ip
+    global timeout
     background = Back.BLACK
     text_style = Style.BRIGHT
     banner = f"""
