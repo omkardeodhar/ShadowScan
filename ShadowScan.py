@@ -1,45 +1,52 @@
 import socket
-import requests
+import ssl
+import time
 from colorama import Fore, Back, Style
 
-def get_ip (domain):
-    try:
-        ip_addr = socket.gethostbyname (domain)
-        return ip_addr
-    except socket.gaierror:
-        print("Could not resolve domain. Check for any errors in the spelling or IPv4 address.")
-        exit()
-
-def port_scan (ip , ports):
+def port_scan (domain , ports):
     for port in ports:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
         try:
-            sock.connect ((ip , port))
-            print(f"\n{Fore.GREEN}# Port {port} is OPEN: {Style.RESET_ALL}")
+            sock.connect ((domain , port))
+            print(f"\n{Fore.GREEN}# PORT {port} IS OPEN: {Style.RESET_ALL}")
             if port == 80 or port == 443 or port == 8080:
-                header_info (ip , sock)
+                header_info (sock, port)
             else:
-                service_enum = sock.recv(1024).decode('utf-8').strip()
-                print(f"Service information for Port {port}: \n{service_enum}")
+                service_info = sock.recv(1024).decode('utf-8').strip()
+                print(f"Service information for Port {port}: \n{service_info}")
         except (socket.timeout , socket.error):
             pass
         finally:
             sock.close()
 
-def header_info (ip , sock):
+def header_info (sock, port):
+    if port == 80 or port == 8080:
         try:
-            url = f"GET / HTTP/1.1\r\nHost: {ip}\r\n\r\n"
+            url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
             sock.send(url.encode('utf-8'))
-            response_header = sock.recv(1024).decode('utf-8')
-            print("Recieved Response: ")
+            response_header = sock.recv(4096).decode('utf-8')
+            print(f"Recieved Response: ")
             for line in response_header.split('\n'):
                 print(line)
-        except (socket.timeout , socket.error):
-            pass
+        except (socket.timeout , socket.error) as e:
+            print("Error: ",e)
+        
+    elif port == 443:
+        url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
+        context = ssl.create_default_context()
+        with context.wrap_socket(sock, server_hostname = target_domain) as ssl_sock:
+            try:
+                ssl_sock.send(url.encode('utf-8'))
+                response_header = ssl_sock.recv(4096).decode('utf-8')
+                print(f"Recieved Response: ")
+                for line in response_header.split('\n'):
+                    print(line)
+            except (socket.timeout , socket.error) as e:
+                print("Error: ",e)
             
 def main ():
-    global timeout
+    global timeout,target_domain
     background = Back.BLACK
     text_style = Style.BRIGHT
     banner = f"""
@@ -52,23 +59,24 @@ def main ():
     *   PROPER PERMISSION; MAY VIOLATE PRIVACY LAWS.      *
     *                                                     *
     *   Developed by: Omkar Deodhar                       *
-    *   Version: 1.5                                      *
+    *   Version: 2.0                                      *
     *******************************************************
     {Style.RESET_ALL}
     """
     print(banner)
-
-    target_domain = input("Enter the IPv4 address or Domain name of the target (without http/https/www): ")
-    target_ip = get_ip (target_domain)
+    
     try:
+        target_domain = input("Enter the name of the Target Domain to scan (without http/https/www): ")
+        socket.gethostbyname(target_domain)
         timeout = float(input("Enter Socket timeout in seconds (Higher socket timeout will result in a slower scan): "))
-    except ValueError:
-        print("Enter valid timeout value")
+    except (ValueError , socket.gaierror) as e:
+        print("Message: ",e)
         exit()
-    if target_ip:
+    if target_domain:
+        time.sleep (1)
         common_ports = [21,22,23,25,53,80,110,135,137,138,139,389,443,445,636,995,1433,1434,3306,3389,8080]
-        print(f"\nStarting port scan for {target_ip}: ")
-        port_scan(target_ip , common_ports)
+        print("\nStarting port scan for: ",socket.gethostbyname(target_domain))
+        port_scan(target_domain , common_ports)
     else:
         print("There was some error resolving the IP.")
         exit()
