@@ -1,6 +1,8 @@
 import socket
 import ssl
 import time
+from ftplib import FTP
+from scapy.all import IP,TCP,sr
 from colorama import Fore, Back, Style
 
 def port_scan (domain , ports):
@@ -12,6 +14,10 @@ def port_scan (domain , ports):
             print(f"\n{Fore.GREEN}# PORT {port} IS OPEN: {Style.RESET_ALL}")
             if port == 80 or port == 443 or port == 8080:
                 header_info (sock, port)
+            elif port == 21:
+                ftp_info(sock, port)
+            elif port == 139 or port == 445:
+                micr_info (target_domain, port)
             else:
                 service_info = sock.recv(1024).decode('utf-8').strip()
                 print(f"Service information for Port {port}: \n{service_info}")
@@ -19,21 +25,40 @@ def port_scan (domain , ports):
             pass
         finally:
             sock.close()
+            
+def micr_info (domain, port):
+    try:
+        smb_packet = IP(dst=domain, version = 4)/TCP(dport=port, flags="S")
+        smb_response = sr(smb_packet, timeout=timeout, verbose=0)
+        print(smb_response)
+    except Exception as e:
+        print(f"Error: {e}")
+            
+def ftp_info (sock, port):
+    try:
+        service_info = sock.recv(1024).decode('utf-8').strip()
+        print(f"Service information for Port {port}: \n{service_info}")
+        ftp = FTP()
+        ftp.connect(sock.getpeername()[0], port)
+        ftp.login("anonymous", "")
+        print("ANONYMOUS LOGIN SUPPORTED")
+        ftp.quit()
+    except Exception as e:
+        print(f"Anonymous login not supported: {e}")
 
 def header_info (sock, port):
+    url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
     if port == 80 or port == 8080:
         try:
-            url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
             sock.send(url.encode('utf-8'))
             response_header = sock.recv(4096).decode('utf-8')
             print(f"Recieved Response: ")
             for line in response_header.split('\n'):
                 print(line)
         except (socket.timeout , socket.error) as e:
-            print("Error: ",e)
+            print(f"Error: {e}")
         
     elif port == 443:
-        url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
         context = ssl.create_default_context()
         with context.wrap_socket(sock, server_hostname = target_domain) as ssl_sock:
             try:
@@ -43,14 +68,13 @@ def header_info (sock, port):
                 for line in response_header.split('\n'):
                     print(line)
             except (socket.timeout , socket.error) as e:
-                print("Error: ",e)
+                print(f"Error: {e}")
             
 def main ():
     global timeout,target_domain
     background = Back.BLACK
     text_style = Style.BRIGHT
-    banner = f"""
-    {Fore.RED}{background}{text_style}
+    banner = f""" {Fore.RED}{background}{text_style}
     *******************************************************
     *             SHADOWSCAN PORT SCANNER                 *
     *                                                     *
@@ -59,10 +83,9 @@ def main ():
     *   PROPER PERMISSION; MAY VIOLATE PRIVACY LAWS.      *
     *                                                     *
     *   Developed by: Omkar Deodhar                       *
-    *   Version: 2.0                                      *
+    *   Version: 2.5                                      *
     *******************************************************
-    {Style.RESET_ALL}
-    """
+    {Style.RESET_ALL} """
     print(banner)
     
     try:
@@ -70,7 +93,7 @@ def main ():
         socket.gethostbyname(target_domain)
         timeout = float(input("Enter Socket timeout in seconds (Higher socket timeout will result in a slower scan): "))
     except (ValueError , socket.gaierror) as e:
-        print("Message: ",e)
+        print(f"Message: {e}")
         exit()
     if target_domain:
         time.sleep (1)
