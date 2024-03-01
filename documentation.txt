@@ -1,0 +1,35 @@
+                                                                                           Shadow-Scan Port Scanner - Project Documentation
+INTRODUCTION:-
+* Shadow-Scan Port Scanner is a Python-based port scanning tool developed for educational and authorized use only. 
+* The tool is designed to identify open ports on a target domain and provides insights into potential vulnerabilities and services running on the system.
+* This tool is a simple implememtation of a port scanner to understand the basic concepts of networking and information gathering. This tool cannot be solely relied upon to give accurate results.
+* For more in-depth analysis use more advanced tools like Nmap, Masscan etc.
+
+DISCLAIMER:-
+Warning: This tool is intended for educational and authorized use only. Use with caution and proper permission, as it may violate privacy laws.
+
+FEATURES:-
+* Port Scanning: Identifies the most common open ports on the target domain.
+* Service Information: Retrieves information about services running on common ports.
+* Some of the supported ports for scanning are:-
+1. 21 - FTP
+2. 22 - SSH
+3. 23 - Telnet
+4. 25 - SMTP
+5. 80 - HTTP
+6. 443 - HTTPS
+7. 445 - Microsoft SMB
+
+INSTALLATION:-
+* NOTE:- This tool is only LINUX compatible.
+* The project is implemented in Python and uses libraries such as socket, ssl, time, ftplib, scapy, and colorama.
+* First ensure that python is installed on your system. If not run 'sudo apt install python' or 'sudo apt install python3'
+* Then install non-standard libraries using 'pip install colorama' and 'pip install scapy'
+* Install 'Git' to clone repository
+* Clone this GitHub repository in your local machine using 'git clone https://github.com/omkardeodhar/ShadowScan.git'
+* Navigate to project directory using 'cd ShadowScan'
+* Finally run the tool using 'python ShadowScan.py' or 'python3 ShadowScan.py' (python3 recommended)
+* Enter the 'Domain name' and 'Socket timeout' when prompted
+* Users are encouraged to use the tool responsibly and with proper authorization.
+
+
