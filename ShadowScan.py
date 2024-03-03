@@ -47,7 +47,7 @@ def ftp_info (sock, port):
         print(f"Anonymous login not supported: {e}")
 
 def header_info (sock, port):
-    url = f"GET / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
+    url = f"HEAD / HTTP/1.1\r\nHost: {target_domain}\r\n\r\n"
     if port == 80 or port == 8080:
         try:
             sock.send(url.encode('utf-8'))
